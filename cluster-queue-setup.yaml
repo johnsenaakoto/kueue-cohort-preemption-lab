@@ -1,0 +1,58 @@
+# Shared flavor, two ClusterQueues, and one LocalQueue for each team.
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ResourceFlavor
+metadata:
+  name: default-flavor
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: cluster-queue
+spec:
+  cohortName: cohort-one
+  namespaceSelector: {}
+  resourceGroups:
+    - coveredResources: [cpu, memory]
+      flavors:
+        - name: default-flavor
+          resources:
+            - name: cpu
+              nominalQuota: 500m
+            - name: memory
+              nominalQuota: 9Gi
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  namespace: default
+  name: user-queue
+spec:
+  clusterQueue: cluster-queue
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: ClusterQueue
+metadata:
+  name: cluster-queue-john
+spec:
+  # John can reclaim his nominal quota from a cohort peer that is borrowing.
+  preemption:
+    reclaimWithinCohort: Any
+  cohortName: cohort-one
+  namespaceSelector: {}
+  resourceGroups:
+    - coveredResources: [cpu, memory]
+      flavors:
+        - name: default-flavor
+          resources:
+            - name: cpu
+              nominalQuota: 500m
+            - name: memory
+              nominalQuota: 9Gi
+---
+apiVersion: kueue.x-k8s.io/v1beta2
+kind: LocalQueue
+metadata:
+  namespace: default
+  name: john-queue
+spec:
+  clusterQueue: cluster-queue-john

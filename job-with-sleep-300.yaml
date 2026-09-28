@@ -1,0 +1,23 @@
+# This workload uses 500m of its own quota and borrows 400m from the cohort.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: user-sleep-300
+  namespace: default
+  labels:
+    kueue.x-k8s.io/queue-name: user-queue
+spec:
+  parallelism: 9
+  completions: 9
+  template:
+    spec:
+      containers:
+        - name: dummy-job
+          image: registry.k8s.io/e2e-test-images/agnhost:2.53
+          command: ["/bin/sh"]
+          args: ["-c", "sleep 300"]
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "200Mi"
+      restartPolicy: Never
